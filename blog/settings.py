@@ -37,6 +37,8 @@ INSTALLED_APPS = [
     'django.contrib.sessions',
     'django.contrib.messages',
     'django.contrib.staticfiles',
+    # 子应用的注册
+    'users.apps.UsersConfig',
 ]
 
 MIDDLEWARE = [
@@ -54,7 +56,7 @@ ROOT_URLCONF = 'blog.urls'
 TEMPLATES = [
     {
         'BACKEND': 'django.template.backends.django.DjangoTemplates',
-        'DIRS': [],
+        'DIRS': [os.path.join(BASE_DIR, 'templates')],
         'APP_DIRS': True,
         'OPTIONS': {
             'context_processors': [
@@ -122,3 +124,92 @@ USE_TZ = True
 # https://docs.djangoproject.com/en/2.2/howto/static-files/
 
 STATIC_URL = '/static/'
+# 设置静态资源路径
+STATICFILES_DIRS = [
+    os.path.join(BASE_DIR, 'static')
+]
+
+# redis 的配置
+
+CACHES = {
+    'default': {  # 默认
+        'BACKEND': 'django_redis.cache.RedisCache',
+        #  redis默认是6379端口，第0的数据库，这里我们选择第0个数据库，123456是密码
+        # 'LOCATION': 'redis://:123456@127.0.0.1:6379/0',
+        # 无密码
+        'LOCATION': 'redis://127.0.0.1:6379/0',
+        'OPTIONS': {
+            'CLIENT_CLASS': 'django_redis.client.DefaultClient',
+        }
+    },
+    'session': {  # 会话 session
+        'BACKEND': 'django_redis.cache.RedisCache',
+        #  redis默认是6379端口，第0的数据库，这里我们选择第1个数据库，123456是密码
+        # 'LOCATION': 'redis://:123456@127.0.0.1:6379/1',
+        # 无密码
+        'LOCATION': 'redis://127.0.0.1:6379/1',
+        'OPTIONS': {
+            'CLIENT_CLASS': 'django_redis.client.DefaultClient',
+        }
+    }
+}
+# session由数据库存储改为由redis存储
+SESSION_ENGINE = 'django.contrib.sessions.backends.cache'
+SESSION_CACHE_ALIAS = 'session'
+
+
+# 日志配置
+
+LOGGING = {
+    'version': 1,
+    # 是否禁用已经存在的日志器
+    'disable_existing_loggers': False,
+    # 日志格式器配置
+    'formatters': {
+        'standard': {
+            'format': '%(asctime)s [%(threadName)s: %(thread)d]'
+                      '%(pathname)s: %(funcName)s: %(lineno)d %(levelname)s - %(message)s'
+        },
+        'verbose': {
+            'format': '%(levelname)s %(asctime)s %(module)s %(lineno)d %(process)d  %(thread)d %(message)s'
+        },
+        'simple': {  # 简单格式
+            'format': '%(levelname)s %(message)s'
+        },
+    },
+    # 过滤器test配置
+    'filters': {
+        'require_debug_true': {  # django 在 debug模式下才输出日志
+            '()': 'django.utils.log.RequireDebugTrue',
+        }
+    },
+    # 处理器配置
+    'handlers': {
+        # 终端处理器配置，向终端输出日志
+        'console': {
+            'level': 'INFO',
+            'filters': ['require_debug_true'],
+            'class': 'logging.StreamHandler',
+            'formatter': 'verbose'  # 使用上面定义的standard格式器
+        },
+        # 文件处理器配置，向文件中输出日志
+        'file': {
+            'level': 'INFO',
+            'class': 'logging.handlers.RotatingFileHandler',
+            'filename': os.path.join(BASE_DIR, 'logs/blog.log'),  # 日志文件位置
+            'maxBytes': 1024*1024*1024,   # 文件大小 达到1G自动分割
+            'backupCount': 5,  # 保存备份文件的数量
+            'formatter': 'verbose',  # 输出格式，使用上面定义的standard格式器
+            'encoding': 'utf-8'  # 指定文件编码
+        }
+    },
+    # 配置日志实例
+    'loggers': {  # 日志器
+        'django': {  # 日志实例名，定义了一个django日志器
+            'handlers': ['console', 'file'],  # 可同时向终端和文件中输出日志
+            # 'filters': ['test'],
+            'propagate': True,  # 是否继续传递日志信息
+            'level': 'INFO'  # 日志接收器的最低日志级别
+        }
+    }
+}
