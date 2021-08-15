@@ -26,7 +26,7 @@ var vm = new Vue({
         image_code_url:''
     },
     mounted(){
-        this.generate_image_code()
+        this.generate_image_code();
     },
     methods: {
         //显示下拉菜单
@@ -141,7 +141,6 @@ var vm = new Vue({
                             //图片验证码错误
                             this.image_code_error = true;
                         }
-                        this.sms_code_error = true;
                         this.generate_image_code();
                         this.sending_flag = false;
                     }
